@@ -23,3 +23,4 @@
 \tikzstyle{new edge style 10}=[-, fill={rgb,255: red,255; green,119; blue,119}, draw=red]
 \tikzstyle{new edge style 11}=[-, fill={rgb,255: red,255; green,180; blue,94}, draw={rgb,255: red,215; green,107; blue,0}, align=left]
 \tikzstyle{new edge style 12}=[<->]
+\tikzstyle{new edge style 13}=[-]

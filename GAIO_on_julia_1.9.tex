@@ -38,10 +38,13 @@
 \usepackage{tcolorbox}
 
 \tcbset{highlight math style={colback=blue!20!white,arc=2pt,boxrule=0pt}}
+\newenvironment{emphbox}
+  {\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black]}
+  {\end{tcolorbox}}
+
 
 \usepackage{algpseudocodex}
 \usepackage{algorithm}
-
 
 %\colorlet{lightblue}{!10}
 \usepackage{listings}
@@ -106,7 +109,7 @@
 
 % presentation metadata
 \title{GAIO.jl}
-\subtitle{Fast, Elegant Set-Oriented Numerical Methods for Dynamical Systems}
+\subtitle{Preparing for a 1.0 release using julia 1.9}
 \author{April Herwig}
 
 \institute{\theChairName\\\theDepartmentName\\\theUniversityName}
@@ -163,39 +166,7 @@
 
 \maketitle
 
-\begin{frame}{Dynamical systems}
-
-Consider a continuous map
-\[
-f:\R^d\to \R^d.
-\] 
-
-The map defines a \emph{discrete dynamical system} by iteration:
-\[
-x_{k+1} = f(x_k), \qquad k=0,1,2,\ldots
-\]
-
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black]
-Basic question: \textit{What is the fate of some $x_0$ as $k\to\infty$?}
-\end{tcolorbox}
-
-
-
-\end{frame}
-
-\begin{frame}{Attractors}
-
-\begin{definition}
-    A set $A\subset\R^d$ is \emph{invariant}, if
-    \[
-    f^{-1} (A) = A.
-    \]
-\end{definition}
-
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black]
-Example: $A=\{\bar x\}$ with $\bar x = f(\bar x)$ a \emph{fixed point}.
-\end{tcolorbox}
-
+\begin{frame}{Motivation}{Attractors}
 
 \begin{definition}
     An invariant set $A$ is \emph{attracting} if there is a neighborhood $U$ of $A$ such that for every open set $V\supset A$ there is $K\in\N$ such that
@@ -204,10 +175,6 @@ Example: $A=\{\bar x\}$ with $\bar x = f(\bar x)$ a \emph{fixed point}.
     \]
 \end{definition}
 
-\end{frame}
-
-\begin{frame}{Relative attractors}
-
 \begin{proposition}
     If $A$ is a closed attracting set then
     \[
@@ -215,22 +182,13 @@ Example: $A=\{\bar x\}$ with $\bar x = f(\bar x)$ a \emph{fixed point}.
     \]
 \end{proposition}
 
-\begin{definition}
-    For some compact set $Q\subset\R^d$, the \emph{attractor relative to} $Q$ is
-    \[
-    A_Q \overset{def}{=} \bigcap_{k\in\N} f^k(Q).
-    \]    
-\end{definition}
-
-We have
-\begin{itemize}
-    \item $A_Q$ is not necessarily invariant,
-    \item but any invariant subset of $Q$ is contained in $A_Q$.  
-\end{itemize}
+\begin{emphbox}
+    \textbf{Basic idea:} Successively refine an approximation of $A$ using \emph{subdivision}
+\end{emphbox}
 
 \end{frame}
 
-\begin{frame}{Computing $A_Q$}{The subdivision algorithm}
+\begin{frame}{Computing Attractors}{The subdivision algorithm}
 
 Generate a sequence $\cB_0,\cB_1,\cB_2,\ldots$ of finite families of compact sets as follows:
 
@@ -243,27 +201,85 @@ Let $\cB_0=\{Q\}$, $\theta \in (0,1)$. For $k=1,2,\ldots$ do
     \]
     \item set
     \begin{gather*}
-    \cB_k = f(\cB_k), \quad \text{where}\quad \\ 
-    f(\cB_k) \overset{def}{=} \{ B\in\hat\cB_k \mid \exists B'\in\hat\cB_k: f^{-1}(B)\cap B' \neq \varnothing\}.
+    \cB_k = f(\hat\cB_k) \cap \hat\cB_k, \quad \text{where}\quad \\ 
+    f(\hat\cB_k) \cap \hat\cB_k \,\overset{def}{=}\, \{ B\in\hat\cB_k \mid \exists B'\in\hat\cB_k: f(B')\cap B \neq \varnothing\}.
     \end{gather*}
 \end{itemize}
 
 \medskip
 
-\begin{theorem}
-$|\cB_k|\to A_Q$ as $k\to\infty$ in the Hausdorff metric.
-\end{theorem}
+\begin{emphbox}
+  \begin{theorem}
+    $|\cB_k|\to A_Q$ as $k\to\infty$ in the Hausdorff metric.
+  \end{theorem}
+\end{emphbox}
 
 \end{frame}
 
-\begin{frame}{Computing $A_Q$}{Cell Mapping}
+\begin{frame}{Computing Attractors}{The subdivision algorithm}
+  
+\begin{figure}
+  \includegraphics[height=0.8\textheight]{figures/henon_subdivisions}
+\end{figure}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Representation of Cubical Complexes}
+
+\texttt{BoxPartition}: partition the domain into equally sized grid of hypercubes, or "Boxes"
+
+\begin{lstlisting}[language=Matlab,mathescape]
+  struct BoxPartition{N,T,I<:Integer}
+      domain::Box{N,T}
+      dims::SVector{N,I}
+  end
+\end{lstlisting}
+
+\texttt{TreePartition}: binary tree holding successive subdivisions
+
+\begin{lstlisting}[language=Matlab,mathescape]
+  struct Node{I<:Integer}
+      left::I
+      right::I
+  end
+
+  struct TreePartition{N,T,I,V<:AbstractArray{Node{I}}}
+      domain::Box{N,T}
+      nodes::V
+  end
+\end{lstlisting}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Representation of Cubical Complexes}
+
+\texttt{BoxSet}: collections of Boxes within a partition
+
+\begin{lstlisting}[language=Matlab,mathescape]
+  struct BoxSet{B,P<:AbstractBoxPartition{B},S<:AbstractSet} <: AbstractSet{B}
+      partition::P
+      indices::S
+  end
+\end{lstlisting}
+
+We can use the built-in set data types and setwise operations for \texttt{BoxSet}s using \emph{multiple-dispatch}
+
+\begin{lstlisting}[language=Matlab,mathescape]
+  function Base.$\subseteq$(B$_1$::BoxSet, B$_2$::BoxSet)
+      ( B$_1$.partition == B$_2$.partition ) && ( B$_1$.indices $\subseteq$ B$_2$.indices )
+  end
+\end{lstlisting}
+
+\end{frame}
+
+\begin{frame}{Cell Mapping}
 
 So how do we compute 
 \[
-  f(\cB_k) = \{ B\in\hat\cB_k \mid \exists B'\in\hat\cB_k: f^{-1}(B)\cap B' \neq \varnothing\}\ ?
+  f(\cB) = \{ B\in\cP \mid \exists B'\in\cB: f(B')\cap B \neq \varnothing\}\ ?
 \]
-
-\begin{multicols}{2}
 
 \begin{figure}
   \ctikzfig{boximage}
@@ -271,104 +287,109 @@ So how do we compute
   \label{fig:boximage}
 \end{figure}
 
-\columnbreak
-
-\vspace*{2ex}
-\begin{itemize}
-  \item test-point sampling \vspace*{1ex}
-  \item interval arithmetic
-\end{itemize}
-
-\end{multicols}
-
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{The {\LARGE \julia} programming language}
+\frametitle{Cell Mapping}
+\framesubtitle{test point sampling}
 
-Vision: an \emph{open-source}, \emph{elegant}, and \emph{fast} language for scientific computing
-
-\begin{itemize}
-  \item Composable, uses \emph{Multiple-dispatch} paradigm \vspace*{1ex}
-  \item Easy to read \vspace*{1ex}
-  \item Many built-in standard libraries for scientific computing \vspace*{1ex}
-  \item Well documented from the beginning \vspace*{1ex}
-\end{itemize}
-
-%\begin{lstlisting}[language=Matlab,mathescape]
-%julia> # unicode input natively supported
-%       $\bbC$ = Complex
-%Complex
-%
-%julia> # mutiple dispatch: Base functions can be extended
-%       Base.in(z, ::Type{Complex}) = z isa Complex
-%
-%julia> z = 5.0 + 3.0*im
-%5.0 + 3.0*im
-%
-%julia> z $\in$ $\bbC$
-%true
-%\end{lstlisting}
-
-\end{frame}
-
-\begin{frame}[fragile]
-\frametitle{GAIO in {\LARGE \julia}: GAIO.jl}
-
-%\medskip
-
-Compare the pseudocode algorithm
-  
-\begin{algorithmic}[1]
-    %\Function{relative_attractor}{$f$, $\cB$, steps}
-    \Require $f,\,\ \cB_0,\,\ n_{\text{steps}}$
-    %\State $\mathcal{B}_0 \gets \mathcal{B}$
-
-    \For{$k = \left\{ 1,\ \dotsc,\ n_{\text{steps}} \right\}$}
-        %\Comment{$n$ is a predefined number of iteration steps}
-        \State $\mathcal{B}_k \gets$ \Call{subdivide}{$\,\mathcal{B}_{k-1}\,$}
-        \State $\mathcal{B}_k \gets \mathcal{B}_k\, \cap\, f (\,\mathcal{B}_k\,)$
-    \EndFor
-
-    \State \Return $\mathcal{B}_n$ 
-    %\EndFunction
-\end{algorithmic}
-
-to the julia implementation
+\medskip
 
 \begin{lstlisting}[language=Matlab,mathescape]
-  function relative_attractor(f::BoxMap, $\cB$::BoxSet, steps)
-    for k = 1:steps
-      $\cB$ = subdivide($\cB$)
-      $\cB$ = $\cB$ $\cap$ f($\cB$)
-    end
-    return $\cB$
-  end
+function map_boxes(g::SampledBoxMap, source::BoxSet)
+
+  B() = empty(source)                # Function to initialize empty BoxSet
+  P = source.partition
+
+  $\text{\textcolor{blue}{\texttt{@floop}}}$ for box in source
+    for p in g.domain_points(box)    # Generate sample points
+      fp = typesafe_map(g, p)        # Wrap user-function output
+      hit = cover(P, fp)             # Box in P covering the point fp
+      $\text{\textcolor{blue}{\texttt{@reduce}}}$(image = B() $\cup$ hit) $\quad\ \ \,$   # Each thread collects hits,
+    end                              # after loop completion the 
+  end                                # result is reduced
+
+  return image
+end 
 \end{lstlisting}
 
 \end{frame}
 
-\begin{frame}{GAIO in {\LARGE \julia}: GAIO.jl}{demos}
-
+\begin{frame}{Cell Mapping}{test point sampling}
+  
 \begin{itemize}
-  \item Relative attractor of the Hénon map \vspace*{2ex}
-  \item Invariant probability measure in the Lorenz system \vspace*{2ex}
-  \item Almost invariant (metastable) sets in Chua's circuit \vspace*{2ex}
+  \item choose test points within $\cB$ and record their images under $f$
+  \item memory-efficient "lazy" test point sampling with \texttt{Generator}s
+  \item ensure type-stability to shorten generated code
+  \item spread load across multiple compute threads using \textcolor{blue}{\texttt{@floop}} macro
+  \item collect hits and reduce per-thread result into single result using \textcolor{blue}{\texttt{@reduce}} macro
+  \item can harness the GPU using CUDA.jl
 \end{itemize}
 
 \end{frame}
 
-\begin{frame}{GAIO in {\LARGE \julia}: GAIO.jl}{other (current and future) examples}
+\begin{frame}[fragile]
+\frametitle{Cell Mapping}
 
-\begin{itemize}
-  \item Coherent sets using the technique of Froyland \& Padberg (2009)
-  \item Topological entropy (by next week or I owe you a beer)
-  \item Conley index pair generation
-  \item Morse graph / decomposition and adherence
-\end{itemize}
+All \texttt{BoxMap} types work under a common API: they must define 
 
-These (and many more) can be found in GAIO.jl's documentation at \url{gaioguys.github.io/GAIO.jl/}  
+\begin{lstlisting}[language=Matlab,mathescape]
+  map_boxes(g::MyBoxMap, source::BoxSet)
+  construct_transfers(g::MyBoxMap, domain::BoxSet)
+  construct_transfers(g::MyBoxMap, domain::BoxSet, codomain::BoxSet)
+\end{lstlisting}
+
+You now have all the knowledge to understand \texttt{TransferOperator, BoxGraph} as well! 
   
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Optimization: Solving "Time-To-First-Attractor"}
+  
+Investigating the first execution shows an interesting problem: a GPU kernel gets compiled... even when no GPU is present?
+
+Solve by converting the CUDA dependency to an \emph{extension}
+
+\begin{lstlisting}[language=Matlab,mathescape]
+  name = "GAIO"
+  uuid = "33d280d1-ac47-4b0f-9c2e-fa6a385d0226"
+  authors = ["The GAIO.jl Team"]
+  version = "1.0.0"
+
+  [deps]
+  ...
+
+  [weakdeps]
+  CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+  ...
+
+  [extensions]
+  CUDAExt = "CUDA"
+  ...
+\end{lstlisting}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Optimization: Solving "Time-To-First-Attractor"}
+
+With dynamic dispatch reduced, we can now save precompiled code in a \emph{package image}. To force precompilation of common workloads, use \texttt{PrecompileTools.jl}
+
+\medskip
+
+\begin{lstlisting}[language=Matlab,mathescape]
+  using PrecomileTools
+
+  $\text{\textcolor{blue}{\texttt{@setup\_workload}}}$ begin
+    # set local variables for common workload, e.g. attractor of Henon map
+
+    $\text{\textcolor{blue}{\texttt{@compile\_workload}}}$ begin
+      # track which code gets generated and force full compilation
+    end
+
+  end
+\end{lstlisting}
+
 \end{frame}
 
 
