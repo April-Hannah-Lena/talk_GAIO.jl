@@ -1,0 +1,375 @@
+\documentclass[
+  english,            % define the document language (english, german)
+  aspectratio=169,    % define the aspect ratio (169, 43)
+  % handout=2on1,       % create handout with multiple slides (2on1, 4on1)
+  % partpage=false,     % insert page at beginning of parts (true, false)
+  % sectionpage=true,   % insert page at beginning of sections (true, false)
+]{tumbeamer}
+
+
+% load additional packages
+\usepackage{booktabs}
+\usepackage{amssymb}
+\usepackage{mdframed}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{multicol}
+\usepackage{hyperref}
+%\usepackage{julialogo}
+
+\makeatletter
+\patchcmd{\@Aboxed}{\boxed{#1#2}}{\fcolorbox{white}{blue!20}{$\displaystyle #1#2$}}{}{}%
+\makeatother
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+
+%\usepackage{courier}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{tikzit}
+\usetikzlibrary{shapes,arrows,calc,decorations.pathreplacing,angles,quotes}
+
+\input{colors.tikzstyles}
+
+\usepackage{empheq}
+\usepackage{tcolorbox}
+
+\tcbset{highlight math style={colback=blue!20!white,arc=2pt,boxrule=0pt}}
+
+\usepackage{algpseudocodex}
+\usepackage{algorithm}
+
+
+%\colorlet{lightblue}{!10}
+\usepackage{listings}
+\lstset{
+	basicstyle=\ttfamily,
+	backgroundcolor = \color{blue!10},
+	keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{purple},
+    basicstyle=\ttfamily\footnotesize,
+	% numbers=left, 
+	numberstyle={\footnotesize \color{blue!50}},
+	xleftmargin=.1in,
+	numbersep=3pt,
+	literate={\$}{{\textcolor{blue}{\$}}}1,
+  showlines=true 
+}
+	
+\usepackage{lmodern}
+
+\usepackage{fontawesome}
+\usepackage{julialogo}
+
+\usepackage{nameref}
+\makeatletter
+\newcommand*{\currentname}{\@currentlabelname}
+\makeatother
+%\usepackage{dsfont}
+
+\newcommand{\R}{{\mathbb R}}
+\newcommand{\N}{{\mathbb N}}
+\newcommand{\E}{{\mathbb E}}
+\renewcommand{\P}{{\mathbb P}}
+\newcommand{\bbC}{{\mathbb C}}
+\newcommand{\cO}{\mathcal{O}}
+\newcommand{\cF}{\mathcal{F}}
+\newcommand{\cE}{\mathcal{E}}
+\newcommand{\cX}{\mathcal{X}}
+\newcommand{\cA}{\mathcal{A}}
+\newcommand{\cS}{\mathcal{S}}
+\newcommand{\cR}{\mathcal{R}}
+\newcommand{\cB}{\mathcal{B}}
+\newcommand{\cP}{\mathcal{P}}
+
+\newcommand{\tV}{\widetilde{V}}
+\newcommand{\tF}{\widetilde{F}}
+\newcommand{\tQ}{\widetilde{Q}}
+
+\newcommand{\bw}{\mathbold{w}}
+
+\newcommand{\step}[1]{\mathds{1}_{\{#1\ge 0\}}}
+
+\newcommand{\eps}{\varepsilon}
+
+\renewcommand{\emph}[1]{\textcolor{purple}{#1}}
+\newcommand{\argmax}{\mathop{\textrm{argmax}}}
+\newcommand{\mean}{\mathop{\textrm{mean}}}
+\newcommand{\diam}{\mathop{\textrm{diam}}}
+
+
+\setbeamertemplate{itemize items}[circle]
+
+% presentation metadata
+\title{GAIO.jl}
+\subtitle{Fast, Elegant Set-Oriented Numerical Methods for Dynamical Systems}
+\author{April Herwig}
+
+\institute{\theChairName\\\theDepartmentName\\\theUniversityName}
+\date{}
+
+%\footline{\insertauthor~|~\insertshorttitle~|~\insertshortdate}
+\footline{}
+
+
+% macro to configure the style of the presentation
+\TUMbeamersetup{
+  title page = TUM centered,         % style of the title page
+  part page = TUM toc,            % style of part pages
+  section page = TUM toc,         % style of section pages
+  content page = TUM more space,  % style of normal content pages
+  tower scale = 1.0,              % scaling factor of TUM tower (if used)
+  headline = TUM empty,      % which variation of headline to use
+  footline = TUM default,         % which variation of footline to use
+  % configure on which pages headlines and footlines should be printed
+  headline on = {title page},
+  footline on = {every page, title page=false},
+}
+
+% available frame styles for title page, part page, and section page:
+% TUM default, TUM tower, TUM centered,
+% TUM blue default, TUM blue tower, TUM blue centered,
+% TUM shaded default, TUM shaded tower, TUM shaded centered,
+% TUM flags
+%
+% additional frame styles for part page and section page:
+% TUM toc
+%
+% available frame styles for content pages:
+% TUM default, TUM more space
+%
+% available headline options:
+% TUM empty, TUM oneliner, TUM twoliner, TUM threeliner, TUM logothreeliner
+%
+% available footline options:
+% TUM empty, TUM default, TUM infoline
+
+\setlength{\parskip}{1em}
+
+\usepackage{mathpple}
+%\usepackage{euler}
+%\usepackage{palatino}
+
+\begin{document}
+
+\tikzstyle{block} = [thick, draw, rectangle, rounded corners, fill=blue!20,
+                       minimum height=3em, minimum width=6em]
+\tikzstyle{node} = [thick, draw, circle, fill=blue!20]
+\tikzstyle{action} = [thick, draw, circle, fill=red!10]
+
+\maketitle
+
+\begin{frame}{Dynamical systems}
+
+Consider a continuous map
+\[
+f:\R^d\to \R^d.
+\] 
+
+The map defines a \emph{discrete dynamical system} by iteration:
+\[
+x_{k+1} = f(x_k), \qquad k=0,1,2,\ldots
+\]
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black]
+Basic question: \textit{What is the fate of some $x_0$ as $k\to\infty$?}
+\end{tcolorbox}
+
+
+
+\end{frame}
+
+\begin{frame}{Attractors}
+
+\begin{definition}
+    A set $A\subset\R^d$ is \emph{invariant}, if
+    \[
+    f^{-1} (A) = A.
+    \]
+\end{definition}
+
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black]
+Example: $A=\{\bar x\}$ with $\bar x = f(\bar x)$ a \emph{fixed point}.
+\end{tcolorbox}
+
+
+\begin{definition}
+    An invariant set $A$ is \emph{attracting} if there is a neighborhood $U$ of $A$ such that for every open set $V\supset A$ there is $K\in\N$ such that
+    \[
+    f^k(U)\subset V \quad\text{for all } k\ge K.
+    \]
+\end{definition}
+
+\end{frame}
+
+\begin{frame}{Relative attractors}
+
+\begin{proposition}
+    If $A$ is a closed attracting set then
+    \[
+    A = \bigcap_{k\in\N} f^k(U).
+    \]
+\end{proposition}
+
+\begin{definition}
+    For some compact set $Q\subset\R^d$, the \emph{attractor relative to} $Q$ is
+    \[
+    A_Q \overset{def}{=} \bigcap_{k\in\N} f^k(Q).
+    \]    
+\end{definition}
+
+We have
+\begin{itemize}
+    \item $A_Q$ is not necessarily invariant,
+    \item but any invariant subset of $Q$ is contained in $A_Q$.  
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Computing $A_Q$}{The subdivision algorithm}
+
+Generate a sequence $\cB_0,\cB_1,\cB_2,\ldots$ of finite families of compact sets as follows:
+
+Let $\cB_0=\{Q\}$, $\theta \in (0,1)$. For $k=1,2,\ldots$ do
+\begin{itemize}
+    \item construct $\hat\cB_k$ such that
+    \[
+    |\hat\cB_k| = |\cB_{k-1}|
+    \quad\text{and}\quad \diam\hat\cB_k \leq \theta \cdot \diam\cB_{k-1}.
+    \]
+    \item set
+    \begin{gather*}
+    \cB_k = f(\cB_k), \quad \text{where}\quad \\ 
+    f(\cB_k) \overset{def}{=} \{ B\in\hat\cB_k \mid \exists B'\in\hat\cB_k: f^{-1}(B)\cap B' \neq \varnothing\}.
+    \end{gather*}
+\end{itemize}
+
+\medskip
+
+\begin{theorem}
+$|\cB_k|\to A_Q$ as $k\to\infty$ in the Hausdorff metric.
+\end{theorem}
+
+\end{frame}
+
+\begin{frame}{Computing $A_Q$}{Cell Mapping}
+
+So how do we compute 
+\[
+  f(\cB_k) = \{ B\in\hat\cB_k \mid \exists B'\in\hat\cB_k: f^{-1}(B)\cap B' \neq \varnothing\}\ ?
+\]
+
+\begin{multicols}{2}
+
+\begin{figure}
+  \ctikzfig{boximage}
+  %\caption{Image of the simple box set $\cB = \left\{ B \right\}$}
+  \label{fig:boximage}
+\end{figure}
+
+\columnbreak
+
+\vspace*{2ex}
+\begin{itemize}
+  \item test-point sampling \vspace*{1ex}
+  \item interval arithmetic
+\end{itemize}
+
+\end{multicols}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{The {\LARGE \julia} programming language}
+
+Vision: an \emph{open-source}, \emph{elegant}, and \emph{fast} language for scientific computing
+
+\begin{itemize}
+  \item Composable, uses \emph{Multiple-dispatch} paradigm \vspace*{1ex}
+  \item Easy to read \vspace*{1ex}
+  \item Many built-in standard libraries for scientific computing \vspace*{1ex}
+  \item Well documented from the beginning \vspace*{1ex}
+\end{itemize}
+
+%\begin{lstlisting}[language=Matlab,mathescape]
+%julia> # unicode input natively supported
+%       $\bbC$ = Complex
+%Complex
+%
+%julia> # mutiple dispatch: Base functions can be extended
+%       Base.in(z, ::Type{Complex}) = z isa Complex
+%
+%julia> z = 5.0 + 3.0*im
+%5.0 + 3.0*im
+%
+%julia> z $\in$ $\bbC$
+%true
+%\end{lstlisting}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{GAIO in {\LARGE \julia}: GAIO.jl}
+
+%\medskip
+
+Compare the pseudocode algorithm
+  
+\begin{algorithmic}[1]
+    %\Function{relative_attractor}{$f$, $\cB$, steps}
+    \Require $f,\,\ \cB_0,\,\ n_{\text{steps}}$
+    %\State $\mathcal{B}_0 \gets \mathcal{B}$
+
+    \For{$k = \left\{ 1,\ \dotsc,\ n_{\text{steps}} \right\}$}
+        %\Comment{$n$ is a predefined number of iteration steps}
+        \State $\mathcal{B}_k \gets$ \Call{subdivide}{$\,\mathcal{B}_{k-1}\,$}
+        \State $\mathcal{B}_k \gets \mathcal{B}_k\, \cap\, f (\,\mathcal{B}_k\,)$
+    \EndFor
+
+    \State \Return $\mathcal{B}_n$ 
+    %\EndFunction
+\end{algorithmic}
+
+to the julia implementation
+
+\begin{lstlisting}[language=Matlab,mathescape]
+  function relative_attractor(f::BoxMap, $\cB$::BoxSet, steps)
+    for k = 1:steps
+      $\cB$ = subdivide($\cB$)
+      $\cB$ = $\cB$ $\cap$ f($\cB$)
+    end
+    return $\cB$
+  end
+\end{lstlisting}
+
+\end{frame}
+
+\begin{frame}{GAIO in {\LARGE \julia}: GAIO.jl}{demos}
+
+\begin{itemize}
+  \item Relative attractor of the Hénon map \vspace*{2ex}
+  \item Invariant probability measure in the Lorenz system \vspace*{2ex}
+  \item Almost invariant (metastable) sets in Chua's circuit \vspace*{2ex}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{GAIO in {\LARGE \julia}: GAIO.jl}{other (current and future) examples}
+
+\begin{itemize}
+  \item Coherent sets using the technique of Froyland \& Padberg (2009)
+  \item Topological entropy (by next week or I owe you a beer)
+  \item Conley index pair generation
+  \item Morse graph / decomposition and adherence
+\end{itemize}
+
+These (and many more) can be found in GAIO.jl's documentation at \url{gaioguys.github.io/GAIO.jl/}  
+  
+\end{frame}
+
+
+\end{document}
