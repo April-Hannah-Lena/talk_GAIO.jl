@@ -268,8 +268,14 @@ We can use the built-in set data types and setwise operations for \texttt{BoxSet
 
 \begin{lstlisting}[language=Matlab,mathescape]
   function Base.$\subseteq$(B$_1$::BoxSet, B$_2$::BoxSet)
-      ( B$_1$.partition == B$_2$.partition ) && ( B$_1$.indices $\subseteq$ B$_2$.indices )
+  ( B$_1$.partition == B$_2$.partition ) && ( B$_1$.indices $\subseteq$ B$_2$.indices )
   end
+\end{lstlisting}
+
+Combined with \texttt{BoxSet}, the \texttt{BoxPartition} (resp. \texttt{TreePartition}) serves as a $\sigma$-algebra over the domain. We can generate sets with \texttt{cover}:
+
+\begin{lstlisting}[language=Matlab,mathescape]
+  cover(partition, points),   cover(partition, other_boxset)
 \end{lstlisting}
 
 \end{frame}
