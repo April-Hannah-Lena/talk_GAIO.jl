@@ -350,6 +350,42 @@ You now have all the knowledge to understand \texttt{TransferOperator, BoxGraph}
 \end{frame}
 
 \begin{frame}[fragile]
+\frametitle{Usage: Constructing an Attractor algorithm}
+
+%\medskip
+
+Compare the pseudocode algorithm
+
+\begin{algorithmic}[1]
+    %\Function{relative_attractor}{$f$, $\cB$, steps}
+    \Require $f,\,\ \cB_0,\,\ n_{\text{steps}}$
+    %\State $\mathcal{B}_0 \gets \mathcal{B}$
+
+    \For{$k = \left\{ 1,\ \dotsc,\ n_{\text{steps}} \right\}$}
+        %\Comment{$n$ is a predefined number of iteration steps}
+        \State $\mathcal{B}_k \gets$ \Call{subdivide}{$\,\mathcal{B}_{k-1}\,$}
+        \State $\mathcal{B}_k \gets \mathcal{B}_k\, \cap\, f (\,\mathcal{B}_k\,)$
+    \EndFor
+
+    \State \Return $\mathcal{B}_n$ 
+    %\EndFunction
+\end{algorithmic}
+
+to the julia implementation
+
+\begin{lstlisting}[language=Matlab,mathescape]
+  function relative_attractor(f::BoxMap, $\cB$::BoxSet, steps)
+    for k = 1:steps
+      $\cB$ = subdivide($\cB$)
+      $\cB$ = $\cB$ $\cap$ f($\cB$)
+    end
+    return $\cB$
+  end
+\end{lstlisting}
+
+\end{frame}
+
+\begin{frame}[fragile]
 \frametitle{Optimization: Solving "Time-To-First-Attractor"}
   
 Investigating the first execution shows an interesting problem: a GPU kernel gets compiled... even when no GPU is present?
