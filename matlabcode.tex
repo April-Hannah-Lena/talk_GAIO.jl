@@ -109,7 +109,7 @@ end
 \pagebreak
 
 \begin{jllisting}[float, language=julia, style=jlcodestyle, label=lst:gum:julia, captionpos=b]
-    function unstable_set(f::BoxMap, B::BoxSet)
+    function relative_attractor(f::BoxMap, B::BoxSet)
         for s in 1:steps
             B = subivide(B)
             B = B ∩ f(B)
