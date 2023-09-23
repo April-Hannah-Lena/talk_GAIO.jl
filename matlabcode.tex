@@ -1,0 +1,121 @@
+\documentclass[12pt,a4paper,twoside]{article}
+\usepackage{import}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{afterpage}
+\usepackage[section]{placeins}
+\usepackage{biblatex}
+\usepackage{fontspec}
+\usepackage{setspace}
+\usepackage{color}
+\usepackage{algpseudocodex}
+\usepackage{algorithm}
+\usepackage{tikz}
+\usepackage{tikzit}
+\usepackage{julialogo}
+\usepackage[autoload=false, linenumbers=true, theme=default-plain]{jlcode}
+
+\definecolor{mygreen}{RGB}{28,172,0} % color values Red, Green, Blue
+\definecolor{mylilas}{RGB}{170,55,241}
+\definecolor{mygrey}{HTML}{888888}
+\lstdefinestyle{mcodestyle}{%
+    basicstyle=\ttfamily\relsize{-1},
+    breaklines=true,%
+    morekeywords={matlab2tikz},
+    keywordstyle=\color{blue},%
+    morekeywords=[2]{1}, keywordstyle=[2]{\color{black}},
+    identifierstyle=\color{black},%
+    stringstyle=\color{mylilas},
+    commentstyle=\color{mygrey},%
+    showstringspaces=false,%without this there will be a symbol in the places where there is a space
+    numbers=left,%
+    numberstyle={\ttfamily\color{black}},% size of the numbers
+    numbersep=9pt, % this defines how far the numbers are from the text
+    emph=[1]{for,end,break},emphstyle=[1]\color{red}, %some words to emphasise
+    %emph=[2]{word1,word2}, emphstyle=[2]{style},    
+    xleftmargin=\xmrgn,
+    framexleftmargin=0.5\bfem
+}
+
+\addlitjlstrnum{'all'}{\textquotesingle all\textquotesingle}{5}
+\addlitjlstrnum{'X'}{\textquotesingle X\textquotesingle}{3}
+\addlitjlstrnum{e7}{e7}{2}
+\addlitjlbase{2dBox}{2dBox}{5}
+\addlitjlmacros{@muladd}{@muladd}{7}
+\addlitjlmacros{@floop}{@floop}{6}
+\addlitjlmacros{@reduce}{@reduce}{7}
+
+%\setmonofont{FreeMono}
+\graphicspath{ {./figures/} }
+
+\begin{document}
+
+\pagenumbering{gobble}
+
+\begin{algorithm}
+    \begin{algorithmic}[1]
+
+        \For{$i = \left\{ 1,\ \dotsc,\ n \right\}$}
+            \State $\mathcal{B} \gets$ \Call{subdivide}{$\,\mathcal{B}\,$}
+            \State $\mathcal{B} \gets \mathcal{B}\, \cap\, f (\,\mathcal{B}\,)$
+        \EndFor
+
+        \State \Return $\mathcal{B}$ 
+        %\EndProcedure
+    \end{algorithmic}
+\end{algorithm}
+
+\clearpage
+
+\pagebreak
+
+\begin{jllisting}[float, language=matlab, style=jlcodestyle, label=lst:gum:matlab, captionpos=b]
+function relative_attractor(t, f, X, steps)
+dim = t.dim; hit = 1; sd = 8; tic;
+for s = 1:steps,
+    t.set_flags('all', sd);
+    t.subdivide(sd);
+    b = t.boxes(-1); N = size(b,2);
+    S = whos('X'); l = floor(5e7/S.bytes);
+    for k = 0:floor(N/l), 
+        K = k*l+1:min((k+1)*l,N);
+        c = b(1:dim,K);  
+        r = b(dim+1:2*dim,1);  
+        n = size(c,2); E = ones(n,1);       
+        P = kron(E,X)*diag(r) + ...  
+            kron(c',ones(size(X,1),1));
+        t.set_flags(f(P)', hit); 
+    end
+    t.remove(hit); 
+    fprintf(...
+        'depth %d, %d boxes, %.1f sec\n',...
+        t.depth,t.count(-1),toc...
+    );
+end
+\end{jllisting}
+
+\clearpage
+
+\pagebreak
+
+\begin{jllisting}[float, language=julia, style=jlcodestyle, label=lst:gum:julia, captionpos=b]
+    function unstable_set(f::BoxMap, B::BoxSet)
+        for s in 1:steps
+            B = subivide(B)
+            B = B ∩ f(B)
+        end
+        return B
+    end
+\end{jllisting}
+
+\end{document}
