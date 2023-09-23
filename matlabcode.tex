@@ -111,7 +111,7 @@ end
 \begin{jllisting}[float, language=julia, style=jlcodestyle, label=lst:gum:julia, captionpos=b]
     function relative_attractor(f::BoxMap, B::BoxSet)
         for s in 1:steps
-            B = subivide(B)
+            B = subdivide(B)
             B = B ∩ f(B)
         end
         return B
