@@ -18,7 +18,7 @@
 \usepackage{fontspec}
 \usepackage{setspace}
 \usepackage{color}
-\usepackage{algpseudocodex}
+\usepackage[noEnd=false]{algpseudocodex}
 \usepackage{algorithm}
 \usepackage{tikz}
 \usepackage{tikzit}
@@ -64,14 +64,15 @@
 
 \begin{algorithm}
     \begin{algorithmic}[1]
+        \Function{relative attractor\ }{$f$, $\mathcal{B}$, $n$}
+            
+            \For{$i = \left\{ 1,\ \dotsc,\ n \right\}$}
+                \State $\mathcal{B} \gets$ \Call{subdivide}{$\,\mathcal{B}\,$}
+                \State $\mathcal{B} \gets \mathcal{B}\, \cap\, f (\,\mathcal{B}\,)$
+            \EndFor
 
-        \For{$i = \left\{ 1,\ \dotsc,\ n \right\}$}
-            \State $\mathcal{B} \gets$ \Call{subdivide}{$\,\mathcal{B}\,$}
-            \State $\mathcal{B} \gets \mathcal{B}\, \cap\, f (\,\mathcal{B}\,)$
-        \EndFor
-
-        \State \Return $\mathcal{B}$ 
-        %\EndProcedure
+            \State \Return $\mathcal{B}$ 
+        \EndFunction
     \end{algorithmic}
 \end{algorithm}
 
@@ -80,9 +81,9 @@
 \pagebreak
 
 \begin{jllisting}[float, language=matlab, style=jlcodestyle, label=lst:gum:matlab, captionpos=b]
-function relative_attractor(t, f, X, steps)
+function relative_attractor(t, f, X, n)
 dim = t.dim; hit = 1; sd = 8; tic;
-for s = 1:steps,
+for s = 1:n,
     t.set_flags('all', sd);
     t.subdivide(sd);
     b = t.boxes(-1); N = size(b,2);
@@ -109,13 +110,13 @@ end
 \pagebreak
 
 \begin{jllisting}[float, language=julia, style=jlcodestyle, label=lst:gum:julia, captionpos=b]
-    function relative_attractor(f::BoxMap, B::BoxSet)
-        for s in 1:steps
-            B = subdivide(B)
-            B = B ∩ f(B)
-        end
-        return B
+function relative_attractor(f::BoxMap, B::BoxSet, n)
+    for s in 1:n
+        B = subdivide(B)
+        B = B ∩ f(B)
     end
+    return B
+end
 \end{jllisting}
 
 \end{document}
