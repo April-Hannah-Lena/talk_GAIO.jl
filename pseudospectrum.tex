@@ -389,7 +389,7 @@
   \item Given: 
   \begin{itemize}
     \item quadrature scheme: weights $(w^i)_{i=1}^m$, nodes $(x^i)_{i=1}^m$
-    \item dictionary $(\, \psi_j \,)_{j=1}^N$ of $L^2$ observables
+    \item dictionary $(\, \psi_j \,)_{j=1}^N$ of $L^2$ observables, $span\{\psi_j\}_{j=1}^N \xrightarrow{N \to \infty} L^2$
   \end{itemize}
   \item Data matrices: 
   \begin{align}
@@ -430,7 +430,7 @@ Now
 \begin{align}
   \inf_{\| v \|_{L^2} = 1} \| (K - \lambda) v \|^2 &= \inf_{\| v \|_{L^2} = 1} 
   \langle K v,\ K v \rangle - \bar{\lambda} \,\langle v,\ K v \rangle - \lambda \langle K v,\ v \rangle + |\lambda|^2 \langle v,\ v \rangle \\
-  &\approx \inf_{\bv' G \bv = 1} v' (\, L - \bar{\lambda}\, A - \lambda\, A' + |\lambda|^2 \,G \,) v
+  &= \lim_{N \to \infty} \lim_{m \to \infty} \inf_{\bv' G \bv = 1} v' (\, L - \bar{\lambda}\, A - \lambda\, A' + |\lambda|^2 \,G \,) v
 \end{align}
 
 \end{frame}
@@ -438,9 +438,10 @@ Now
 \begin{frame}{How to compute the pseudospectrum}{Residual Ulam}
 
 \begin{theorem}
-  Let $S : X \to X$ be an a.e. diffeomorphism onto its image, $P = P_S$ the induced transfer operator. Consider a box partition $\cP = \left\{ A_1, \ldots, A_N \right\}$ of the phase space $X$. Then 
+  Let $S : X \to X$ be an a.e. diffeomorphism onto its image, $P = P_S$ the induced transfer operator. Consider a sequence of box partitions $\cP = \left\{ A_1, \ldots, A_N \right\}$ of the phase space $X$ with $\diam (\cP) \to 0$. Then 
   \begin{align}
-    \inf_{\| v \|_{L^2} = 1} \| (P - \lambda) v \|^2 &\approx \inf_{\bv' G \bv = 1} v' (\, L - \bar{\lambda}\, A - \lambda\, A' + |\lambda|^2 \,G \,) v
+    \inf_{\| v \|_{L^2} = 1} \| (P - \lambda) v \|^2 
+    &= \lim_{N \to \infty} \inf_{\bv' G \bv = 1} v' (\, L - \bar{\lambda}\, A - \lambda\, A' + |\lambda|^2 \,G \,) v
   \end{align}
   where 
   \begin{equation}
