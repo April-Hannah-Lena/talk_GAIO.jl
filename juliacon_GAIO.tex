@@ -230,7 +230,7 @@ Let $\cB_0=\{Q\}$, $\theta \in (0,1)$. For $k=1,2,\ldots$ do
 
 \begin{emphbox}
   \begin{theorem}
-    $|\cB_k|\to A_Q$ as $k\to\infty$ in the Hausdorff metric.
+    $|\cB_k|\to A$ as $k\to\infty$ in the Hausdorff metric.
   \end{theorem}
 \end{emphbox}
 
@@ -250,14 +250,14 @@ Let $\cB_0=\{Q\}$, $\theta \in (0,1)$. For $k=1,2,\ldots$ do
 Simple idea: partition the domain into equally sized grid of hypercubes
 
 \begin{lstlisting}[language=Matlab,mathescape]
-  $\text{\textcolor{blue}{\texttt{struct}}}$ Box{N,T}
-    lowbound::SVector{N,T}
-    highbound::SVector{N,T}
+  $\text{\textcolor{blue}{\texttt{struct}}}$ Box{N, T}
+    center::SVector{N, T}
+    radius::SVector{N, T}
   end
 
   $\text{\textcolor{blue}{\texttt{struct}}}$ BoxPartition{B <: Box}
     domain::B
-    size::CartesianIndex{N}
+    $\text{\textcolor{black}{\texttt{size}}}$::CartesianIndex{N}
   end
 
   $\text{\textcolor{blue}{\texttt{struct}}}$ BoxSet{P <: BoxPartition, S <: AbstractSet{<:CartesianIndex}}
@@ -271,19 +271,19 @@ Simple idea: partition the domain into equally sized grid of hypercubes
 \end{frame}
 
 \begin{frame}[fragile]
-\frametitle{Representation of Cubical Complexes}
+\frametitle{Representation of Cubical Sets}
 
 We can use the built-in set data types and setwise operations for \texttt{BoxSet}s using \emph{multiple-dispatch}
 
 \begin{lstlisting}[language=Matlab,mathescape]
-  function Base.$\subseteq$(B$_1$::BoxSet, B$_2$::BoxSet)
+  function Base.$\subseteq$( B$_1$::BoxSet, B$_2$::BoxSet )
     B$_1$.partition == B$_2$.partition  && 
       B$_1$.cartesian_indices $\subseteq$ B$_2$.cartesian_indices
   end
 
-  function Base.rand(B::Box{N,T}) where {N,T}
-    l = B.lowbound;  h = B.highbound
-    l + (h-l) .* rand(SVector{N,T})
+  function Base.rand( B::Box{N,T} ) where {N,T}
+    c = B.center;  r = B.radius
+    c .+ r .* rand(-1:eps(T):1, N)
   end
 \end{lstlisting}
 
@@ -317,22 +317,22 @@ So how do we compute
 \medskip
 
 \begin{lstlisting}[language=Matlab,mathescape]
-function map_boxes(f, source::BoxSet{}; n_samples)
+  function map_boxes(f, source::BoxSet; n_samples)
 
-  B() = $\text{\textcolor{blue}{\texttt{empty}}}$(source)                    # Initialize empty BoxSet
-  P = source.partition
+    B() = $\text{\textcolor{blue}{\texttt{empty}}}$(source)                    # Initialize empty BoxSet
+    P = source.partition
 
-  $\text{\textcolor{blue}{\texttt{@floop}}}$ for box in source
-    for k = 1:n_samples
-      p = rand(box)                 # Generate sample point
-      image_p = f(p)
-      hit = $\text{\textcolor{blue}{\texttt{cover}}}$(P, image_p)            # Box in P covering the point fp
-      $\text{\textcolor{blue}{\texttt{@reduce}}}$($\text{\textcolor{black}{\texttt{image}}}$ = B() $\cup$ hit) $\quad\ \ \,$     # Each thread collects hits,
-    end                             # after loop completion the 
-  end                               # result is reduced by $\cup$
+    $\text{\textcolor{blue}{\texttt{@floop}}}$ for box in source
+      for k = 1:n_samples
+        p = rand(box)                 # Generate sample point
+        image_p = f(p)
+        hit = $\text{\textcolor{blue}{\texttt{cover}}}$(P, image_p)            # Box in P covering the point fp
+        $\text{\textcolor{blue}{\texttt{@reduce}}}$($\text{\textcolor{black}{\texttt{image}}}$ = B() $\cup$ hit) $\quad\ \ \,$     # Each thread collects hits,
+      end                             # after loop completion the 
+    end                               # result is reduced by $\cup$
 
-  return $\text{\textcolor{black}{\texttt{image}}}$
-end 
+    return $\text{\textcolor{black}{\texttt{image}}}$
+  end 
 \end{lstlisting}
 
 \end{frame}
@@ -342,7 +342,7 @@ end
 \begin{itemize}
   \item predefine test points and (affine) transform them to $B \in \cB$ as needed
   \item memory-efficient "lazy" test point sampling with \texttt{Generator}s
-  \item ensure type-stability with \texttt{FunctionWrappers} to shorten generated code
+  \item ensure type-stability with \texttt{FunctionWrappers} to shorten generated llvm
   \item spread load across multiple compute threads using \textcolor{blue}{\texttt{@floop}} macro
   \item collect hits and reduce per-thread result into single result using \textcolor{blue}{\texttt{@reduce}} macro
   \item "embarrasingly parallel" - can harness the GPU using CUDA.jl
@@ -375,10 +375,10 @@ Compare the pseudocode algorithm
 to the julia implementation
 
 \begin{lstlisting}[language=Matlab,mathescape]
-  function relative_attractor(f::BoxMap, $\cB$::BoxSet, steps)
+  function relative_attractor(F::BoxMap, $\cB$::BoxSet, steps)
     for k = 1:steps
       $\cB$ = subdivide($\cB$)
-      $\cB$ = $\cB$ $\cap$ f($\cB$)
+      $\cB$ = $\cB$ $\cap$ F($\cB$)
     end
     return $\cB$
   end
