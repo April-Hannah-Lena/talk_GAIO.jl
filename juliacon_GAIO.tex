@@ -15,7 +15,12 @@
 \usepackage{mathtools}
 \usepackage{multicol}
 \usepackage{hyperref}
+\usepackage{caption}
 %\usepackage{julialogo}
+
+\usepackage{biblatex}
+\renewcommand*{\bibfont}{\normalfont\small}
+\addbibresource{juliacon_GAIO.bib}
 
 \makeatletter
 \patchcmd{\@Aboxed}{\boxed{#1#2}}{\fcolorbox{white}{blue!20}{$\displaystyle #1#2$}}{}{}%
@@ -382,6 +387,19 @@ to the julia implementation
     return $\cB$
   end
 \end{lstlisting}
+
+\end{frame}
+
+\begin{frame}%[shrink=1]
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.18\textwidth]{qr-code.png}
+  {\caption*{github.com/gaioguys/GAIO.jl}}
+\end{figure}
+
+\nocite{*}
+\printbibliography
 
 \end{frame}
 
